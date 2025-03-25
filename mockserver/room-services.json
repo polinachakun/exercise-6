@@ -1,0 +1,68 @@
+[
+	{
+		"httpRequest": {
+			"method": "GET",
+			"path": "/api/wristband/1/owner-state"
+		},
+		"httpResponse": {
+			"statusCode": 200,
+			"headers": {
+				"Content-Type": [ "application/json" ]
+			},
+			"body": "\"asleep\""
+		}
+	},
+    {
+		"httpRequest": {
+			"method": "GET",
+			"path": "/api/calendar/1/upcoming"
+		},
+		"httpResponse": {
+			"statusCode": 200,
+			"headers": {
+				"Content-Type": [ "application/json" ]
+			},
+			"body": "\"now\""
+		}
+	},
+	{
+		"httpRequest": {
+			"method": "PUT",
+			"path": "/api/lights/1/state",
+			"body": "on"
+		},
+		"httpResponse": {
+			"statusCode": 204
+		}
+	},
+	{
+		"httpRequest": {
+			"method": "PUT",
+			"path": "/api/lights/1/state",
+			"body": "off"
+		},
+		"httpResponse": {
+			"statusCode": 204
+		}
+	},
+	{
+		"httpRequest": {
+			"method": "PUT",
+			"path": "/api/blinds/1/state",
+			"body": "raised"
+		},
+		"httpResponse": {
+			"statusCode": 204
+		}
+	},
+	{
+		"httpRequest": {
+			"method": "PUT",
+			"path": "/api/blinds/1/state",
+			"body": "lowered"
+		},
+		"httpResponse": {
+			"statusCode": 204
+		}
+	}
+]

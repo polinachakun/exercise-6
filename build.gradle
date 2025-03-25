@@ -1,0 +1,62 @@
+/*
+   Application Goal Miners
+
+   Gradle build file for JaCaMo Application
+*/
+
+defaultTasks 'run'
+
+apply plugin: 'java'
+
+version '1.1'
+group   'org.jacamo'
+
+repositories {
+    mavenCentral()
+    maven { url "https://raw.githubusercontent.com/jacamo-lang/mvn-repo/master" }
+    maven { url "https://repo.gradle.org/gradle/libs-releases" }
+    maven { url 'https://jitpack.io' }
+}
+
+
+dependencies {
+    //implementation('org.jacamo:jacamo:1.1')
+    //implementation ('com.github.HyperAgents:jacamo-hypermedia:0.1.0')
+    //TODO Make jacamo official versions when compatible with JDK 21
+    implementation 'com.github.GiugAles:jacamo:SS2025'
+    //TODO Make jacamo-hypermedia official versions when compatible with JDK 21
+    implementation 'com.github.GiugAles:jacamo-hypermedia:SS2025-1'
+
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/env'
+            srcDir 'src/agt'
+            srcDir 'src/org'
+            srcDir 'src/int'
+            srcDir 'src/java'
+        }
+        resources {
+            srcDir 'src/resources'
+        }
+    }
+}
+
+task task (type: JavaExec, dependsOn: 'classes') {
+    description 'runs the application'
+    group ' JaCaMo'
+    doFirst {
+        mkdir 'log'
+    }
+    mainClass = 'jacamo.infra.JaCaMoLauncher'
+    args 'task.jcm'
+    classpath sourceSets.main.runtimeClasspath
+}
+
+clean {
+    delete 'bin'
+    delete 'build'
+}
