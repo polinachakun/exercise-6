@@ -22,7 +22,16 @@ blinds("lowered").
 */
 @start_plan
 +!start : td("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#Blinds", Url) <-
-    .print("Hello world").
+    .print("Blinds Controller starting...");
+    .my_name(Name);
+
+    makeArtifact("mqtt_BC", "room.MQTTArtifact", [Name], MqttId);
+    focus(MqttId);
+    .print("Blinds Controller: MQTT artifact created and focused").
+
+@handle_received_message
+ +received_message(Sender, Performative, Content) : true <-
+     println("Blinds Controller received Message from ", Sender, " with content: ", Content).
 
 /* Import behavior of agents that work in CArtAgO environments */
 { include("$jacamoJar/templates/common-cartago.asl") }
