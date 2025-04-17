@@ -7,7 +7,7 @@
 mas wake_up_mas {
 
     agent personal_assistant 
-    // agent wristband_manager
+    agent wristband_manager
     agent calendar_manager
     agent blinds_controller
     agent lights_controller

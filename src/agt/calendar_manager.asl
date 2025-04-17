@@ -16,10 +16,21 @@ td("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#CalendarServic
  * Triggering event: addition of goal !start
  * Context: the agents believes that a WoT TD of a was:CalendarService is located at Url
  * Body: greets the user
-*/
+ */
 @start_plan
 +!start : td("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#CalendarService", Url) <-
-    .print("Hello world").
+    .print("Calendar manager starting...");
+    makeArtifact("calendar", 
+                 "org.hyperagents.jacamo.artifacts.wot.ThingArtifact",
+                 [Url], MqttId);
+    !read_upcoming_event.
 
-/* Import behavior of agents that work in CArtAgO environments */
-{ include("$jacamoJar/templates/common-cartago.asl") }
+
+@read_upcoming_event_plan
++!read_upcoming_event : true <-
+    readProperty("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#ReadUpcomingEvent",
+                 EventList);
+    .nth(0, EventList, Event);
+    .print("Upcoming event: ", Event);
+    .wait(5000);
+    !read_upcoming_event.

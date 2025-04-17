@@ -17,7 +17,7 @@ broadcast(jason).
     .print("Hello world");
     .my_name(Name);
     makeArtifact("mqtt_PA", "room.MQTTArtifact", [Name], MqttId);
-    focus(MqttId); 
+    focus(MqttId);
     .print("Personal Assistant: MQTT artifact created and focused").
      
  
