@@ -35,7 +35,8 @@ lights("off").
                  ["on"]);
     .print("Lights turned on");
     -+lights("off");
-    +lights("on").
+    +lights("on");
+    .send("personal_assistant", tell, lights("on")).
 
 
 @turn_off_plan
@@ -44,4 +45,5 @@ lights("off").
                  ["off"]);
     .print("Lights turned off");
     -+lights("on");
-    +lights("off").
+    +lights("off");
+    .send("personal_assistant", tell, lights("off")).

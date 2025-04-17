@@ -14,7 +14,7 @@ broadcast(jason).
  * Body: greets the user
 */
 +!start : true <-
-    .print("Hello world");
+    .print("Personal assistant starting...");
     .my_name(Name);
     makeArtifact("mqtt_PA", "room.MQTTArtifact", [Name], MqttId);
     focus(MqttId);

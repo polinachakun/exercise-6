@@ -35,7 +35,8 @@ blinds("lowered").
                  ["raised"]);
     .print("Blinds raised");
     -+blinds("lowered");
-    +blinds("raised").
+    +blinds("raised");
+     .send("personal_assistant", tell, blinds("raised")).
 
 @lower_blinds_plan
 +!lower_blinds : true <-
@@ -43,4 +44,5 @@ blinds("lowered").
                  ["lowered"]);
     .print("Blinds lowered");
     -+blinds("raised");
-    +blinds("lowered").
+    +blinds("lowered");
+     .send("personal_assistant", tell, blinds("lowered")).
