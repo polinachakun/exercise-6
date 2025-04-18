@@ -27,7 +27,7 @@ blinds("lowered").
                  "org.hyperagents.jacamo.artifacts.wot.ThingArtifact",
                  [Url], MqttId);
     focus(MqttId);
-    !raise_blinds.
+    -+blinds("lowered").
 
 @raise_blinds_plan
 +!raise_blinds : true <-
@@ -46,3 +46,22 @@ blinds("lowered").
     -+blinds("raised");
     +blinds("lowered");
      .send("personal_assistant", tell, blinds("lowered")).
+
+/* Reaction to CFP for increasing illuminance */
++cfp("inc-illuminance")[source(Source)] : blinds("lowered") <-
+    .print("Received CFP for increasing illuminance from ", Source);
+    .print("Blinds are lowered, proposing to raise them");
+    .send(Source, tell, proposal("blinds_controller", "natural_light")).
+
++cfp("inc-illuminance")[source(Source)] : blinds("raised") <-
+    .print("Received CFP for increasing illuminance from ", Source);
+    .print("Blinds already raised, refusing");
+    .send(Source, tell, refuse("inc-illuminance")).
+
+/* Reaction to proposal acceptance/rejection */
++accept_proposal("natural_light")[source(Source)] <-
+    .print("Proposal accepted by ", Source, ". Raising blinds");
+    !raise_blinds.
+
++reject_proposal("natural_light")[source(Source)] <-
+    .print("Proposal rejected by ", Source, ". No action needed").
