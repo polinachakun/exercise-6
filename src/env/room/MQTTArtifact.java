@@ -18,8 +18,8 @@ public class MQTTArtifact extends Artifact {
 
     private MqttClient client;
     private final String[] brokers = {
-        "tcp://broker.hivemq.com:1883",
-        "tcp://test.mosquitto.org:1883"
+        "tcp://test.mosquitto.org:1883",
+        "tcp://broker.hivemq.com:1883"
     };
     
     private String clientId;

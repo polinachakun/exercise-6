@@ -2,6 +2,12 @@
 
 broadcast(jason).
 
+owner_state("asleep").
+
+// wake up preferences
+wake_up_preference("natural_light", 0). 
+wake_up_preference("artificial_light", 1).
+
 /* Initial goals */ 
 
 // The agent has the goal to start
@@ -25,7 +31,6 @@ broadcast(jason).
  +!send_message(Sender, Performative, Content) : true <-
      sendMsg(Sender, Performative, Content).
      
- 
  /*
   * Plan to handle observable changes in the artifact
   * Triggered when the "received_message" observable property is added.
@@ -44,8 +49,20 @@ broadcast(jason).
  +!selective_broadcast(Sender, Performative, Content) : broadcast(jason) <-
      .broadcast(Performative, message(Sender, Performative, Content));
      println("Personal Assistant Broadcasted via Jason: ", Content).
-     
 
+
++upcoming_event("now") : owner_state("awake") <-
+    .print("Enjoy your event!").
+
++upcoming_event("now") : owner_state("asleep") <-
+    .print("Starting wake-up routine...");
+    !wake_up_user.
+
++!wake_up_user
+    : user_pref(natural_light, Rn) & user_pref(artificial_light, Ra) & Ra < Rn
+  <-
+    .print("Waking up with artificial light");
+    !turn_lights_on.
 /*
  * Plan for checking if we need to wake up the user
  * Triggered when relevant conditions change
