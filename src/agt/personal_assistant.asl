@@ -3,14 +3,18 @@
 broadcast(jason).
 
 // Task 4.2 wake up preferences
-wake_up_preference("natural_light", 0). 
+wake_up_preference("natural_light", 0).
 wake_up_preference("artificial_light", 1).
 
 /* Initial goals */ 
+!initialize.
+!start.
 
-// Initialize wake up preferences
-!initialize_wake_up_preferences.
- 
+
+// Master initialization plan
++!initialize : true <-
+    !initialize_wake_up_preferences.
+
 // Initialize user preferences for wake-up
 +!initialize_wake_up_preferences : true <-
     .print("Initializing user preferences for wake-up...");
@@ -18,44 +22,33 @@ wake_up_preference("artificial_light", 1).
     +user_pref(artificial_light, 1);
     .print("User wake up preferences initialized.").
 
-// The agent has the goal to start
-!start.
-
-/* 
- * Plan for reacting to the addition of the goal !start
- * Triggering event: addition of goal !start
- * Context: true (the plan is always applicable)
- * Body: greets the user
-*/
+// Start the personal assistant
 +!start : true <-
     .print("Personal assistant starting...");
     .my_name(Name);
     makeArtifact("mqtt_PA", "room.MQTTArtifact", [Name], MqttId);
     focus(MqttId);
     .print("Personal Assistant: MQTT artifact created and focused").
-     
- 
- /* Plan to send a message using the internal operation defined in the artifact */
- +!send_message(Sender, Performative, Content) : true <-
-     sendMsg(Sender, Performative, Content).
-     
+
+
+ /* Plan to send message using artifact operation*/
++!send_message(Sender, Performative, Content) : true <-
+    sendMsg(Sender, Performative, Content).
+
  /*
   * Plan to handle observable changes in the artifact
   * Triggered when the "received_message" observable property is added.
   */
- @handle_received_message
- +received_message(Sender, Performative, Content) : true <-
-     println("Personal Assistant Message received from ", Sender, " with content: ", Content).
++received_message(Sender, Performative, Content) : true <-
+    println("Personal Assistant Message received from ", Sender, " with content: ", Content).
      
- 
+
 /* Plan for selective broadcasting via MQTT */
-@selective_broadcast_mqtt
 +!selective_broadcast(Sender, Performative, Content) : broadcast(mqtt) <-
     sendMsg("all", Performative, Content);
     .print("Personal Assistant Broadcasted via MQTT: ", Content).
-     
-/* Plan for selective broadcasting via Jason */
-@selective_broadcast_jason
+
+/* Plan for selective broadcasting via Jason */  
 +!selective_broadcast(Sender, Performative, Content) : broadcast(jason) <-
     .broadcast(Performative, message(Sender, Performative, Content));
     .print("Personal Assistant Broadcasted via Jason: ", Content).
@@ -71,32 +64,6 @@ wake_up_preference("artificial_light", 1).
     !clear_cnp_data;
     !initiate_wakeup.
 
-
-// Plan to clear any existing CNP data
-+!clear_cnp_data : true <-
-    .abolish(received_proposal(_,_));
-    .abolish(proposal(_,_)).
-
-// Task 4.2 Plan to initiate the wakeup process 
-+!initiate_wakeup : true <-
-    .println("Initiating wake-up process");
-    !wake_up_user.
-
-// /* Plan to wake up the user based on natural light preference */
-// +!wake_up_user
-//     : user_pref(natural_light, Rn) & user_pref(artificial_light, Ra) & Rn < Ra
-//   <-
-//     .print("Waking up with natural light based on preferences");
-//     !raise_blinds.
-
-// /* Plan to wake up the user based on artificial light preference */
-// +!wake_up_user
-//     : user_pref(natural_light, Rn) & user_pref(artificial_light, Ra) & Ra < Rn
-//   <-
-//     .print("Waking up with artificial light");
-//     !turn_lights_on.
-
-
 /*
  * Plan for checking if we need to wake up the user
  * Triggered when relevant conditions change
@@ -105,13 +72,24 @@ wake_up_preference("artificial_light", 1).
     .print("User is asleep but has an upcoming event: ", Event);
     !wake_up_user.
 
-/* Plan to wake up the user using Contract Net Protocol */
+// Plan to clear any existing CNP data
++!clear_cnp_data : true <-
+    .abolish(received_proposal(_,_));
+    .abolish(proposal(_,_)).
+
+//  Plan to initiate the wakeup process 
++!initiate_wakeup : true <-
+    .println("Initiating wake-up process");
+    !wake_up_user.
+
+// Wake up user using CNP via MQTT
 +!wake_up_user : broadcast(mqtt) <-
     .print("Initiating Contract Net Protocol via MQTT");
     sendMsg("all", tell, cfp("inc-illuminance"));
     .wait(2000);  // Wait for proposals
     !evaluate_proposals.
 
+/* Plan to wake up the user using Contract Net Protocol via Jason */
 +!wake_up_user : broadcast(jason) <-
     .print("Initiating Contract Net Protocol via Jason");
     .broadcast(tell, cfp("inc-illuminance"));
@@ -131,21 +109,28 @@ wake_up_preference("artificial_light", 1).
 +!evaluate_proposals : true <-
     .findall(proposal(A,S), received_proposal(A,S), Proposals);
     .print("Evaluating proposals: ", Proposals);
+    .length(Proposals, Count);
+    
+    if (Count == 0) {
+        .print("No proposals received");
+        !ask_friend_for_help;
+    } else {
+        !process_proposals(Proposals);
+    }.
 
-    if (.member(proposal(AgentNat,"natural_light"), Proposals)) {
+// Process proposals systematically
++!process_proposals(Proposals) : true <-
+    // Check for natural light proposal
+    if (.member(proposal(AgentNat, "natural_light"), Proposals)) {
         .print("Accepting natural_light from ", AgentNat);
         .send(AgentNat, tell, accept_proposal("natural_light"));
         .wait(1500);  
     }
   
-    if (.member(proposal(AgentArt,"artificial_light"), Proposals)) {
+    // Check for artificial light proposal
+    if (.member(proposal(AgentArt, "artificial_light"), Proposals)) {
         .print("Accepting artificial_light from ", AgentArt);
         .send(AgentArt, tell, accept_proposal("artificial_light"));
-    }
- 
-    if (Proposals == []) {
-        .print("No proposals received");
-        !ask_friend_for_help;
     }.
 
 /* Select the best proposal based on user preferences */
@@ -194,7 +179,12 @@ wake_up_preference("artificial_light", 1).
 
     !reject_other_proposals(Agent).
 
-// Reject remaining proposals
+// Handle empty proposals list
++!select_best_proposal([]) <-
+    .print("No available proposals");
+    !ask_friend_for_help.
+
+// Reject all proposals except the accepted one
 +!reject_other_proposals(AcceptedAgent) <-
     .findall(OtherAgent, received_proposal(OtherAgent, _) & OtherAgent \== AcceptedAgent, OtherAgents);
     for (.member(OtherAgent, OtherAgents)) {
@@ -217,25 +207,6 @@ wake_up_preference("artificial_light", 1).
         .send("friend", tell, message("personal_assistant", tell, "Please wake up our  friend, they have an important event but are still asleep"));
     }
     .print("Friend notification sent").
-
-
-/* If no proposals are available in the evaluate_proposals plan, call ask_friend_for_help */
-+!evaluate_proposals : true <-
-    .findall(proposal(Agent, Service), received_proposal(Agent, Service), Proposals);
-    .print("Evaluating proposals: ", Proposals);
-    
-    .length(Proposals, Count);
-    if (Count == 0) {
-        .print("No proposals received");
-        !ask_friend_for_help;
-    } else {
-        !select_best_proposal(Proposals);
-    }.
-
-/* If select_best_proposal fails to find a suitable proposal, call ask_friend_for_help */
-+!select_best_proposal([]) <-
-    .print("No available proposals");
-    !ask_friend_for_help.
 
 /* Plan for turning on lights - sends request to lights_controller */
 +!turn_lights_on : true <-
